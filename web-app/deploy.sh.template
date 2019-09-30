@@ -1,0 +1,10 @@
+webapp="/home/$$REMOTE_USERNAME/projects/$$NAME_OF_PROJECT/web-app"
+rsync -avz -e "ssh -i /Users/$$LOCAL_USERNAME/.ssh/$$RSA_FOR_REMOTE -p $$CUSTOM_SSH_PORT" ./dist.tar.gz $$REMOTE_USERNAME@$$REMOTE_IP_ADDRESS:$webapp
+ssh -i "/Users/$$LOCAL_USERNAME/.ssh/$$RSA_FOR_REMOTE" -p $$CUSTOM_SSH_PORT -t $$REMOTE_USERNAME@$$REMOTE_IP_ADDRESS "tar -czvf $webapp/dist.backup.tar.gz $webapp/dist && rm -rf $webapp/dist && tar -xzvf $webapp/dist.tar.gz -C $webapp/"
+
+$$LOCAL_USERNAME: result of `echo $(whoami)`
+$$REMOTE_USERNAME: username used to log in to remote host
+$$NAME_OF_PROJECT: name of folder where git repo cloned to (leading to dist folder)
+$$CUSTOM_SSH_PORT: alternative port number than 443 or 22 for ssh when configured securely
+$$REMOTE_IP_ADDRESS: ip address of remote host (or dns hostname if desired)
+

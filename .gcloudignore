@@ -1,0 +1,9 @@
+web-app/_DEV
+web-app/node_modules
+web-app/package-lock.json
+web-app/package.json
+web-app/webpack.config.js
+web-app/.babelrc
+web-app/.eslintrc.js
+web-app/src
+web-app/deploy.sh
