@@ -1,18 +1,23 @@
 const webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin')
 const path = require('path')
+const Dotenv = require('dotenv-webpack')
+require('dotenv').config({
+  encoding: 'utf8',
+  path: path.resolve(__dirname, 'src/.env'),
+  debug: true,
+})
 
 module.exports = () => {
-  const dotenv = require('dotenv').config({path: path.resolve(__dirname, 'src/.env')})
-  console.log('looking: ', path.resolve(__dirname, './src/.env'), 'parsed: ', dotenv)
+  console.log('looking: ', path.resolve(__dirname, './src/.env'))
+  const isProduction = process.env.NODE_ENV === 'production'
 
-  new webpack.DefinePlugin({
-    "process.env": dotenv.parsed
-  })
-
-  console.log('path: ', process.env.PRODUCTION_PATH, '\nenvSetProduction: ', process.env.NODE_ENV === 'production')
+  console.log(
+    'path: ', process.env.PRODUCTION_PATH,
+    '\nenvSetProduction: ', isProduction
+  )
 
   return {
     mode: process.env.NODE_ENV,
@@ -21,16 +26,16 @@ module.exports = () => {
       filename: 'bundle.js',
       chunkFilename: '[name].bundle.js',
       path: path.resolve(__dirname, 'dist'),
-      publicPath: process.env.NODE_ENV === 'production' ? process.env.PRODUCTION_PATH : '/',
+      publicPath: isProduction ? process.env.PRODUCTION_PATH : '/',
     },
-    watch: process.env.NODE_ENV === 'development',
+    watch: process.env.NODE_ENV !== 'production',
     devServer: {
       contentBase: path.join(__dirname, 'dist'),
       compress: true,
       port: 5000,
+      historyApiFallback: true,
     },
-    devtool: process.env.NODE_ENV === 'development'
-      ? 'inline-source-map' : 'source-map',
+    devtool: isProduction ? 'source-map' : 'inline-source-map',
     module: {
       rules: [
         {
@@ -50,10 +55,10 @@ module.exports = () => {
               loader: 'file-loader',
               options: {
                 name(file) {
-                  if (process.env.NODE_ENV === 'development') {
-                    return '[path][name].[ext]';
+                  if (isProduction) {
+                    return '[hash].[ext]'
                   }
-                  return '[hash].[ext]';
+                  return '[path][name].[ext]'
                 },
               },
             },
@@ -66,37 +71,49 @@ module.exports = () => {
       extensions: ['.js', '.jsx'],
       modules: [__dirname, 'node_modules'],
       alias: {
+        public: path.resolve(__dirname, 'public'),
         components: 'src/components',
         controllers: 'src/controllers',
         atoms: 'src/components/atoms',
         molecules: 'src/components/molecules',
+        themes: 'src/themes',
       }
     },
     plugins: [
+      new Dotenv({
+        path: path.resolve(__dirname, 'src/.env'),
+        safe: path.resolve(__dirname, 'src/.env.template'),
+        systemvars: true, // load all the predefined 'process.env' variables
+        // which will trump anything local per dotenv specs.
+        silent: isProduction, // hide any errors
+        defaults: false // load '.env.defaults' as the default values if empty.
+      }),
+      new webpack.LoaderOptionsPlugin({
+        debug: !isProduction
+      }),
       new HtmlWebpackPlugin({
         inject: false,
         template: 'src/index.html',
         appMountId: 'app',
       }),
-      ...(process.env.NODE_ENV === 'production'
+      ...(isProduction
         ? [
           new CleanWebpackPlugin(),
         ] : []
       ),
-      new webpack.DefinePlugin({
-        "process.env": dotenv.parsed
-      }),
     ],
-    ...(process.env.NODE_ENV === 'production'
+    ...(isProduction
       ? {
           optimization: {
-            minimizer: [process.env.NODE_ENV === 'production'
-              ? new UglifyJsPlugin({
-                uglifyOptions: {
-                  mangle: true,
-                },
-              }) : null
-            ],
+            minimize: true,
+            minimizer: [new TerserPlugin({
+              terserOptions: {
+                mangle: true,
+                keep_classnames: false,
+                keep_fnames: false,
+                extractComments: true,
+              }
+            })],
           },
         } : {}
     ),

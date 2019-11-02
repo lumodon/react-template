@@ -1,8 +1,10 @@
 import React from 'react'
 import { createUseStyles } from 'react-jss'
-import ttfGilroyBold from 'public/Gilroy-Bold.ttf'
+import MediaQuery, { useMediaQuery } from 'react-responsive'
 
+import ttfGilroyBold from 'public/Gilroy-Bold.ttf'
 import { range } from 'src/utilities'
+import { DEVICE_SIZES } from 'src/config.json'
 
 const useStyles = createUseStyles({
   '@global': {
@@ -22,15 +24,21 @@ const useStyles = createUseStyles({
 
 export default function Home() {
   const classes = useStyles()
+  const isPortrait = useMediaQuery({ query: '(orientation: portrait)' })
 
   const count = range(5).map(it => (
     <li className={classes.listItem} key={it}>|</li>
   ))
 
   return (
-    <ul>
-      {count}
-    </ul>
+    <>
+      {isPortrait && <Lazy importItem={import('molecules/Desktop')} />}
+      <MediaQuery query={DEVICE_SIZES.desktop}>
+        <ul>
+          {count}
+        </ul>
+      </MediaQuery>
+    </>
   )
 }
 

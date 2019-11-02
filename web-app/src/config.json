@@ -1,0 +1,7 @@
+{
+  "DEVICE_SIZES": {
+    "desktop": "(min-device-width: 1000px)",
+    "tablet": "(max-device-width: 999px) and (min-device-width: 621px)",
+    "phone": "(max-device-width: 620px)"
+  },
+}
